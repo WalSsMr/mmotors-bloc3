@@ -1,0 +1,35 @@
+erDiagram
+    USERS ||--o{ APPLICATIONS : depose
+    VEHICLES ||--o{ APPLICATIONS : concerne
+    APPLICATIONS ||--o{ DOCUMENTS : contient
+    USERS {
+        string email PK
+        string full_name
+        string role
+        string password_hash
+    }
+    VEHICLES {
+        int id PK
+        string brand
+        string model
+        int year
+        int mileage
+        int price
+        string mode
+    }
+    APPLICATIONS {
+        int id PK
+        int vehicle_id FK
+        string user_email FK
+        string mode
+        string status
+        string admin_comment
+    }
+    DOCUMENTS {
+        int id PK
+        int application_id FK
+        string filename
+        string stored_name
+        string content_type
+        int size
+    }

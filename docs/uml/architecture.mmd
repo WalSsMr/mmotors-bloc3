@@ -1,0 +1,7 @@
+flowchart LR
+    Client[Client navigateur] --> Front[Frontend React + Vite]
+    Front --> API[API FastAPI]
+    API --> DB[(PostgreSQL)]
+    API --> Uploads[Stockage fichiers]
+    Prometheus --> API
+    Grafana --> Prometheus

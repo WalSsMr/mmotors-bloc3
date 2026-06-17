@@ -1,0 +1,26 @@
+LANCEMENT LOCAL
+
+1) Backend
+cd backend
+py -3.12 -m venv venv
+venv\Scripts\python.exe -m pip install -r requirements.txt
+venv\Scripts\python.exe -m uvicorn app.main:app --reload
+
+2) Frontend
+Ouvrir : frontend/dist/index.html
+
+Comptes :
+admin@mmotors.fr / Admin123!
+user@mmotors.fr / User123!
+
+DEPLOIEMENT RENDER
+Root Directory: backend
+Build Command: pip install -r requirements.txt
+Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+DEPLOIEMENT VERCEL
+Root Directory: frontend
+Framework: Other
+Install Command: echo skip
+Build Command: echo skip
+Output Directory: dist

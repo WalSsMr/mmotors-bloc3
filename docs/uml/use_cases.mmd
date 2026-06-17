@@ -1,0 +1,12 @@
+flowchart TB
+    Client((Client)) --> UC1[Consulter véhicules]
+    Client --> UC2[Créer compte]
+    Client --> UC3[Déposer dossier]
+    Client --> UC4[Ajouter justificatif]
+    Client --> UC5[Suivre dossier]
+
+    Admin((Administrateur)) --> UA1[Ajouter véhicule]
+    Admin --> UA2[Basculer achat/location]
+    Admin --> UA3[Consulter dossiers]
+    Admin --> UA4[Valider ou refuser dossier]
+    Admin --> UA5[Consulter logs et monitoring]
