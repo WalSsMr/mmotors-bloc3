@@ -238,7 +238,7 @@ function App() {
       {view === 'applications' && token && <Applications applications={applications} documents={documents} role={role} vehicles={vehicles} uploadDocument={uploadDocument} openDocument={openDocument} decideApplication={decideApplication} decisionComment={decisionComment} setDecisionComment={setDecisionComment} applicationForm={applicationForm} setApplicationForm={setApplicationForm} createManualApplication={createManualApplication} />}
       {view === 'adminVehicles' && isAdmin && <AdminVehicles vehicles={vehicles} newVehicle={newVehicle} setNewVehicle={setNewVehicle} addVehicle={addVehicle} switchVehicle={switchVehicle} />}
       {view === 'monitoring' && isAdmin && <Monitoring health={health} logs={logs} loadLogs={loadLogs} testAlert={testAlert} />}
-    <footer className="footer"><strong>Projet Bachelor Développeur Web</strong> · Saadan Walid · Bloc 3 · Interface personnalisée DriveOps</footer>
+    <footer className="footer"><strong>Projet Bachelor Développeur Web</strong> · Saadan Walid · Bloc 3</footer>
     </main>
   );
 }
