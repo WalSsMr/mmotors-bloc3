@@ -121,5 +121,5 @@ Résultat validé :
 
 - Frontend : Vercel
 - Backend : Render
-- PostgreSQL : Render PostgreSQL / Supabase / Neon
+- Base de données : SQLite
 - Monitoring : UptimeRobot + Grafana
