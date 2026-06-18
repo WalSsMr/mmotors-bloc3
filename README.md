@@ -72,3 +72,6 @@ Le frontend détecte automatiquement :
 cd backend
 venv\Scripts\python.exe -m pytest --cov=app
 ```
+## Captures d’écran
+
+Les captures d’écran de l’application sont disponibles dans le dossier `docs`.
