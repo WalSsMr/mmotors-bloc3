@@ -57,11 +57,10 @@ Stratégie proposée :
 
 - `main` : version stable
 - `develop` : intégration
-- `feature/auth`
-- `feature/catalog`
-- `feature/applications`
-- `feature/admin`
-- `feature/monitoring-docker-postgres`
+- `fonctionnalite-authentification`  : développement de l'authentification et de la gestion des accès
+
+Les fonctionnalités ont ensuite été intégrées progressivement dans la branche principale après validation.
+
 
 ## 7. Sécurité
 
