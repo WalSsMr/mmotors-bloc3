@@ -12,7 +12,9 @@ Application web de gestion de véhicules d’occasion pour l’achat et la locat
 
 
 ## Accès rapide
-Lien application | https://mmotors-bloc3.vercel.app/ |
+Lien application  https://mmotors-bloc3.vercel.app/ 
+Lien API backend  https://mmotors-back.onrender.com/docs 
+Lien health backend  https://mmotors-back.onrender.com/health
 
 ## Fonctionnalités
 
