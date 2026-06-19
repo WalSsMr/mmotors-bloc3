@@ -110,7 +110,6 @@ Résultat validé :
 
 ### Docker Compose
 
-- PostgreSQL
 - API FastAPI
 - Frontend React
 - Prometheus
