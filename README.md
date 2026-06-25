@@ -6,7 +6,7 @@ Application web de gestion de véhicules d’occasion pour l’achat et la locat
 
 - Frontend : React, Vite
 - Backend : Python, FastAPI
-- Base de données : SQLite en local, compatible PostgreSQL via configuration
+- Base de données :PostgreSQL via configuration
 - Monitoring : endpoint `/health`, `/metrics`, logs applicatifs, configuration Prometheus/Grafana
 - Déploiement : Render pour le backend, Vercel pour le frontend
 
