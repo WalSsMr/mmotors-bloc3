@@ -12,11 +12,11 @@ import re
 import uuid
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, create_engine, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, LargeBinary, create_engine, func, inspect, text
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, Session
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -88,6 +88,7 @@ class DocumentModel(Base):
     application_id = Column(Integer, ForeignKey("applications.id"), nullable=False)
     filename = Column(String(255), nullable=False)
     stored_name = Column(String(400), nullable=False)
+    file_content = Column(LargeBinary, nullable=True)
     content_type = Column(String(100), nullable=False)
     size = Column(Integer, nullable=False)
     uploaded_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -239,8 +240,25 @@ def application_to_schema(a: ApplicationModel) -> dict:
 def document_to_schema(d: DocumentModel) -> dict:
     return {"id": d.id, "application_id": d.application_id, "filename": d.filename, "content_type": d.content_type, "size": d.size, "uploaded_at": iso(d.uploaded_at)}
 
+def ensure_schema_compatibility():
+    """Ajoute les colonnes manquantes sur les bases déjà créées.
+
+    Render conserve la base PostgreSQL entre les redéploiements. Cette fonction
+    permet donc de faire évoluer le schéma sans perdre les données déjà créées.
+    """
+    inspector = inspect(engine)
+    if "documents" in inspector.get_table_names():
+        existing_columns = {column["name"] for column in inspector.get_columns("documents")}
+        if "file_content" not in existing_columns:
+            with engine.begin() as connection:
+                if DATABASE_URL.startswith("sqlite"):
+                    connection.execute(text("ALTER TABLE documents ADD COLUMN file_content BLOB"))
+                else:
+                    connection.execute(text("ALTER TABLE documents ADD COLUMN file_content BYTEA"))
+
 def init_db():
     Base.metadata.create_all(bind=engine)
+    ensure_schema_compatibility()
     session = SessionLocal()
     try:
         if session.query(UserModel).count() == 0:
@@ -294,7 +312,7 @@ async def log_requests(request: Request, call_next):
 def health(db_session: Session = Depends(get_db)):
     db_session.execute(func.count(UserModel.email).select())
     database = "postgresql" if DATABASE_URL.startswith("postgresql") else "sqlite"
-    return {"status": "ok", "database": database, "rpo": "15 minutes", "rto": "1 heure", "uploads": str(UPLOAD_DIR)}
+    return {"status": "ok", "database": database, "storage": "database", "rpo": "15 minutes", "rto": "1 heure"}
 
 @app.get("/metrics", response_class=PlainTextResponse)
 def metrics(db_session: Session = Depends(get_db)):
@@ -388,9 +406,8 @@ async def upload_document(application_id: int, file: UploadFile = File(...), use
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Fichier trop volumineux, maximum 5 Mo")
     safe_name = re.sub(r"[^A-Za-z0-9_.-]", "_", file.filename or "document")
-    stored_name = f"{application_id}_{uuid.uuid4().hex}_{safe_name}"
-    (UPLOAD_DIR / stored_name).write_bytes(content)
-    doc = DocumentModel(application_id=application_id, filename=safe_name, stored_name=stored_name, content_type=file.content_type, size=len(content), uploaded_at=now_dt())
+    stored_name = f"db_{application_id}_{uuid.uuid4().hex}_{safe_name}"
+    doc = DocumentModel(application_id=application_id, filename=safe_name, stored_name=stored_name, file_content=content, content_type=file.content_type, size=len(content), uploaded_at=now_dt())
     db_session.add(doc); db_session.commit(); db_session.refresh(doc)
     logger.info("Document stocké dossier=%s fichier=%s taille=%s", application_id, safe_name, len(content))
     return document_to_schema(doc)
@@ -422,6 +439,14 @@ def download_document(document_id: int, token: Optional[str] = None, db_session:
     app_row = db_session.get(ApplicationModel, row.application_id)
     if user["role"] != Role.admin.value and app_row.user_email != user["sub"]:
         raise HTTPException(status_code=403, detail="Accès au document refusé")
+    if row.file_content is not None:
+        return Response(
+            content=bytes(row.file_content),
+            media_type=row.content_type,
+            headers={"Content-Disposition": f'attachment; filename="{row.filename}"'},
+        )
+
+    # Compatibilité avec les anciens documents stockés sur disque en local.
     path = UPLOAD_DIR / row.stored_name
     if not path.exists():
         raise HTTPException(status_code=404, detail="Fichier manquant sur le serveur")

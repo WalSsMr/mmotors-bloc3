@@ -10,12 +10,6 @@ Application web de gestion de véhicules d’occasion pour l’achat et la locat
 - Monitoring : endpoint `/health`, `/metrics`, logs applicatifs, configuration Prometheus/Grafana
 - Déploiement : Render pour le backend, Vercel pour le frontend
 
-
-## Accès rapide
-Lien application  https://mmotors-bloc3.vercel.app/ 
-Lien API backend  https://mmotors-back.onrender.com/docs 
-Lien health backend  https://mmotors-back.onrender.com/health
-
 ## Fonctionnalités
 
 - Consultation du catalogue véhicules
@@ -55,6 +49,21 @@ Le frontend détecte automatiquement :
 
 - local : `http://127.0.0.1:8000`
 - production : `https://mmotors-back.onrender.com`
+
+
+## Correction demandée par l’évaluateur : persistance en production
+
+Le backend est compatible avec PostgreSQL en production. Sur Render, il faut créer une base PostgreSQL puis ajouter la variable d’environnement `DATABASE_URL` dans le service backend. Lorsque cette variable est présente, l’endpoint `/health` retourne `database: postgresql`.
+
+Les justificatifs téléversés ne sont plus stockés uniquement sur le disque local du serveur. Leur contenu binaire est enregistré en base de données dans la table `documents`, ce qui permet aux documents de survivre à un redéploiement Render.
+
+Preuve attendue :
+
+1. créer un compte utilisateur ;
+2. déposer un dossier ;
+3. ajouter un justificatif PDF ou image ;
+4. redéployer le backend Render ;
+5. se reconnecter et vérifier que le dossier et le justificatif sont encore présents.
 
 ## Déploiement
 
