@@ -131,13 +131,19 @@ function App() {
     setMessage('Déconnexion effectuée');
   }
 
-  async function createApplication(vehicle) {
+  async function createApplication(vehicle, customMessage = '') {
     if (!isUser) { setMessage('Connecte-toi avec le compte user pour déposer un dossier.'); setView('login'); return; }
+    const cleanMessage = String(customMessage || '').trim();
     try {
       await apiFetch('/applications', {
         method: 'POST', headers: authHeaders,
-        body: JSON.stringify({ vehicle_id: vehicle.id, mode: vehicle.mode, message: 'Dossier déposé depuis le portail client' }),
+        body: JSON.stringify({
+          vehicle_id: vehicle.id,
+          mode: vehicle.mode,
+          message: cleanMessage || 'Dossier déposé depuis le portail client',
+        }),
       });
+      setApplicationForm(prev => ({ ...prev, message: '' }));
       setMessage('Dossier créé. Ajoute maintenant une pièce justificative PDF/JPG/PNG depuis ton espace client.');
       setView('applications');
       await loadApplications();
@@ -148,7 +154,10 @@ function App() {
     event.preventDefault();
     const selected = vehicles.find(v => Number(v.id) === Number(applicationForm.vehicle_id));
     if (!selected) return setMessage('Sélectionne un véhicule');
-    await createApplication({ ...selected, mode: applicationForm.mode || selected.mode });
+    await createApplication(
+      { ...selected, mode: applicationForm.mode || selected.mode },
+      applicationForm.message
+    );
   }
 
   async function uploadDocument(applicationId, file) {
@@ -291,7 +300,7 @@ function Applications({ applications, documents, role, vehicles, uploadDocument,
   return <section className="page"><div className="pageHead"><div><p className="eyebrow">{role === 'admin' ? 'Back-office' : 'Dossier client'}</p><h1>{role === 'admin' ? 'Dossiers clients' : 'Mes dossiers'}</h1></div></div>
     {role === 'user' && <div className="card formCard"><h2>Déposer un nouveau dossier</h2><form onSubmit={createManualApplication} className="formGrid"><label>Véhicule<select value={applicationForm.vehicle_id} onChange={e => { const v = vehicles.find(x => Number(x.id) === Number(e.target.value)); setApplicationForm({ ...applicationForm, vehicle_id: e.target.value, mode: v?.mode || applicationForm.mode }); }} required>{vehicles.map(v => <option key={v.id} value={v.id}>{v.brand} {v.model} · {MODE_LABELS[v.mode]}</option>)}</select></label><label>Type<select value={applicationForm.mode} onChange={e => setApplicationForm({ ...applicationForm, mode: e.target.value })}><option value="sale">Achat</option><option value="rental">Location</option></select></label><label className="wide">Message<textarea placeholder="Informations utiles pour l’étude du dossier" value={applicationForm.message} onChange={e => setApplicationForm({ ...applicationForm, message: e.target.value })}></textarea></label><button>Envoyer le dossier</button></form></div>}
     {role === 'admin' && <div className="card"><label>Commentaire de décision<input placeholder="Commentaire envoyé au client" value={decisionComment} onChange={e => setDecisionComment(e.target.value)} /></label></div>}
-    <div className="tableCard"><table><thead><tr><th>Dossier</th><th>Véhicule</th><th>Type</th><th>Statut</th><th>Documents</th><th>Actions</th></tr></thead><tbody>{applications.map(app => <tr key={app.id}><td>#{app.id}</td><td>Véhicule #{app.vehicle_id}</td><td>{MODE_LABELS[app.mode]}</td><td><span className={`status ${STATUS_CLASS[app.status]}`}>{STATUS_LABELS[app.status]}</span></td><td><div className="docList">{(documents[app.id] || []).length ? documents[app.id].map(doc => <button key={doc.id} className="doc" onClick={() => openDocument(doc.id)}>📄 {doc.filename}</button>) : <span>0</span>}</div></td><td><div className="actions">{role === 'user' && <label className="upload">Ajouter pièce<input type="file" accept="application/pdf,image/png,image/jpeg" onChange={e => uploadDocument(app.id, e.target.files[0])} /></label>}{role === 'admin' && <><button onClick={() => decideApplication(app.id, 'accepted')}>Valider</button><button className="red" onClick={() => decideApplication(app.id, 'refused')}>Refuser</button></>}</div><small>{app.admin_comment || app.message}</small></td></tr>)}</tbody></table>{applications.length === 0 && <p className="empty">Aucun dossier pour le moment.</p>}</div>
+    <div className="tableCard"><table><thead><tr><th>Dossier</th><th>Véhicule</th><th>Type</th><th>Statut</th><th>Message client</th><th>Réponse admin</th><th>Documents</th><th>Actions</th></tr></thead><tbody>{applications.map(app => <tr key={app.id}><td>#{app.id}</td><td>Véhicule #{app.vehicle_id}</td><td>{MODE_LABELS[app.mode]}</td><td><span className={`status ${STATUS_CLASS[app.status]}`}>{STATUS_LABELS[app.status]}</span></td><td><p className="commentText">{app.message || 'Aucun message'}</p></td><td><p className="commentText">{app.admin_comment || 'Pas encore de réponse'}</p></td><td><div className="docList">{(documents[app.id] || []).length ? documents[app.id].map(doc => <button key={doc.id} className="doc" onClick={() => openDocument(doc.id)}>📄 {doc.filename}</button>) : <span>0</span>}</div></td><td><div className="actions">{role === 'user' && <label className="upload">Ajouter pièce<input type="file" accept="application/pdf,image/png,image/jpeg" onChange={e => uploadDocument(app.id, e.target.files[0])} /></label>}{role === 'admin' && <><button onClick={() => decideApplication(app.id, 'accepted')}>Valider</button><button className="red" onClick={() => decideApplication(app.id, 'refused')}>Refuser</button></>}</div></td></tr>)}</tbody></table>{applications.length === 0 && <p className="empty">Aucun dossier pour le moment.</p>}</div>
   </section>;
 }
 
